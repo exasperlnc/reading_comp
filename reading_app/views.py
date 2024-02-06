@@ -13,3 +13,22 @@ def upload_document(request):
         form = DocumentForm()
 
     return render(request, 'reading_app/upload.html', {'form': form})
+
+    import requests
+
+def generate_questions(document_text):
+    response = requests.post('LLM_API_ENDPOINT', json={
+        'text': document_text,
+        'other_parameters': '...'
+    }, headers={'Authorization': 'Bearer OPEN_AI_API_KEY'})
+
+    questions = response.json()  # Assuming the response is JSON with questions
+    return questions
+
+    from django.shortcuts import render, get_object_or_404
+
+def view_document(request, document_id):
+    document = get_object_or_404(Document, pk=document_id)
+    questions = document.question_set.all()
+    return render(request, 'reading_app/view_document.html', {'document': document, 'questions': questions})
+# Path: reading_app/urls.py
