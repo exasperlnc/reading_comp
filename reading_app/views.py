@@ -32,3 +32,16 @@ def view_document(request, document_id):
     questions = document.question_set.all()
     return render(request, 'reading_app/view_document.html', {'document': document, 'questions': questions})
 # Path: reading_app/urls.py
+
+def submit_answer(request):
+    if request.method == 'POST':
+        form = AnswerForm(request.POST)
+        if form.is_valid():
+            question = get_object_or_404(Question, pk=form.cleaned_data['question_id'])
+            answer = Answer(question=question, user_response=form.cleaned_data['user_answer'])
+            answer.save()
+            # Redirect or show some confirmation page
+    else:
+        form = AnswerForm()
+
+    return render(request, 'reading_app/answer_form.html', {'form': form})
