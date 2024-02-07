@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document Details</title>
+</head>
+<body>
+    <h1>Document Details</h1>
+
+    <!-- Display Document Information -->
+    <h2>{{ document.title }}</h2>
+    <!-- Add other document fields as needed -->
+
+    <!-- Display Questions Related to the Document -->
+    <h3>Questions</h3>
+    {% if questions %}
+        <ul>
+            {% for question in questions %}
+                <li>{{ question.text }}</li>
+                <!-- Display other question fields as needed -->
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No questions available for this document.</p>
+    {% endif %}
+</body>
+</html>
