@@ -15,7 +15,7 @@ class TestUploadDocument(TestCase):
         self.assertTemplateUsed(response, 'reading_app/upload.html')
 
     def test_upload_document_post(self):
-        with open('path/to/your/testfile.txt', 'rb') as file:
+        with open('testfile.txt', 'rb') as file:
             response = self.client.post(self.url, {'docfile': file}, format='multipart')
             self.assertEqual(response.status_code, 302)  # Check for redirect
             self.assertEqual(Document.objects.count(), 1)
