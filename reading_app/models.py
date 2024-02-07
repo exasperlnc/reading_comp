@@ -10,4 +10,4 @@ class Question(models.Model):
     text = models.TextField()
 
 class Answer(models.Model):
-    question = models.ForeignKey(Question, on_delete=mode
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)

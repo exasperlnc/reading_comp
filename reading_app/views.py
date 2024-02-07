@@ -1,6 +1,9 @@
-from django.shortcuts import render
-from .models import Document
-from .forms import DocumentForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+from .models import Document, Question, Answer
+from .forms import DocumentForm, AnswerForm
+import requests
+import openai
 
 def upload_document(request):
     if request.method == 'POST':
@@ -8,30 +11,28 @@ def upload_document(request):
         if form.is_valid():
             newdoc = Document(file=request.FILES['docfile'])
             newdoc.save()
-            # After saving, redirect to a new URL or indicate success
+            return redirect('view_document', document_id=newdoc.id)  # Redirect to the document view
     else:
         form = DocumentForm()
-
     return render(request, 'reading_app/upload.html', {'form': form})
 
-    import requests
-
 def generate_questions(document_text):
-    response = requests.post('LLM_API_ENDPOINT', json={
-        'text': document_text,
-        'other_parameters': '...'
-    }, headers={'Authorization': 'Bearer OPEN_AI_API_KEY'})
-
-    questions = response.json()  # Assuming the response is JSON with questions
-    return questions
-
-    from django.shortcuts import render, get_object_or_404
+    try:
+        response = requests.post('LLM_API_ENDPOINT', json={
+            'text': document_text,
+            'other_parameters': '...'
+        }, headers={'Authorization': 'Bearer OPEN_AI_API_KEY'})
+        response.raise_for_status()
+        questions = response.json()  # Assuming the response is JSON with questions
+        return questions
+    except requests.RequestException as e:
+        print(e)
+        return []
 
 def view_document(request, document_id):
     document = get_object_or_404(Document, pk=document_id)
     questions = document.question_set.all()
     return render(request, 'reading_app/view_document.html', {'document': document, 'questions': questions})
-# Path: reading_app/urls.py
 
 def submit_answer(request):
     if request.method == 'POST':
@@ -40,23 +41,24 @@ def submit_answer(request):
             question = get_object_or_404(Question, pk=form.cleaned_data['question_id'])
             answer = Answer(question=question, user_response=form.cleaned_data['user_answer'])
             answer.save()
-            # Redirect or show some confirmation page
+            return redirect('answer_success')  # Redirect to a success page or similar
     else:
         form = AnswerForm()
-
     return render(request, 'reading_app/answer_form.html', {'form': form})
-
-import openai
 
 def evaluate_answer_with_gpt3(question_text, user_answer, document_text=None):
     prompt = build_evaluation_prompt(question_text, user_answer, document_text)
-    response = openai.Completion.create(
-        engine="davinci",
-        prompt=prompt,
-        max_tokens=50  # Adjust as necessary
-    )
-    score = parse_gpt3_response(response.choices[0].text)
-    return score
+    try:
+        response = openai.Completion.create(
+            engine="davinci",
+            prompt=prompt,
+            max_tokens=50
+        )
+        score = parse_gpt3_response(response.choices[0].text)
+        return score
+    except openai.error.OpenAIError as e:
+        print(e)
+        return None
 
 def build_evaluation_prompt(question_text, user_answer, document_text=None):
     prompt = f"Document: {document_text}\n\n" if document_text else ""
@@ -65,10 +67,7 @@ def build_evaluation_prompt(question_text, user_answer, document_text=None):
     return prompt
 
 def parse_gpt3_response(response_text):
-    # Implement logic to parse the score from GPT-3's response
-    # Example: assuming GPT-3 returns a simple number as a response
     try:
         return int(response_text.strip())
     except ValueError:
-        return None  # or handle as appropriate
-
+        return None

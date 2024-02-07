@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'reading_app',  # Add the reading_app to the list of installed apps
 ]
 
 MIDDLEWARE = [
