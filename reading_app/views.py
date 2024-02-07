@@ -45,3 +45,30 @@ def submit_answer(request):
         form = AnswerForm()
 
     return render(request, 'reading_app/answer_form.html', {'form': form})
+
+import openai
+
+def evaluate_answer_with_gpt3(question_text, user_answer, document_text=None):
+    prompt = build_evaluation_prompt(question_text, user_answer, document_text)
+    response = openai.Completion.create(
+        engine="davinci",
+        prompt=prompt,
+        max_tokens=50  # Adjust as necessary
+    )
+    score = parse_gpt3_response(response.choices[0].text)
+    return score
+
+def build_evaluation_prompt(question_text, user_answer, document_text=None):
+    prompt = f"Document: {document_text}\n\n" if document_text else ""
+    prompt += f"Question: {question_text}\nAnswer: {user_answer}\n\n"
+    prompt += "Rate the answer on a scale from 0 (no comprehension) to 5 (full comprehension):"
+    return prompt
+
+def parse_gpt3_response(response_text):
+    # Implement logic to parse the score from GPT-3's response
+    # Example: assuming GPT-3 returns a simple number as a response
+    try:
+        return int(response_text.strip())
+    except ValueError:
+        return None  # or handle as appropriate
+
