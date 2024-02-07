@@ -21,4 +21,5 @@ from reading_app import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('upload/', views.upload_document, name='upload_document'),
+    path('document/<int:document_id>/', views.view_document, name='view_document'),
 ]
