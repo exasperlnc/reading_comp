@@ -56,7 +56,7 @@ def evaluate_answer_with_gpt3(question_text, user_answer, document_text=None):
         )
         score = parse_gpt3_response(response.choices[0].text)
         return score
-    except openai.error.OpenAIError as e:
+    except openai.OpenAIError as e:
         print(e)
         return None
 
