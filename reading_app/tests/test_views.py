@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from reading_app.models import Document, Question
-from reading_app.forms import DocumentForm
+from reading_app.models import Document, Question, Answer
+from reading_app.forms import DocumentForm, AnswerForm
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch
 from reading_app.views import generate_questions
@@ -73,4 +73,50 @@ class ViewDocumentTests(TestCase):
         non_existing_id_url = reverse('view_document', args=(999,))
         response = self.client.get(non_existing_id_url)
         self.assertEqual(response.status_code, 404)
+
+class SubmitAnswerTests(TestCase):
+    def setUp(self):
+        self.document = Document.objects.create(
+            title="Test Document", 
+            file=SimpleUploadedFile("test.txt", b"test content", content_type="text/plain")
+        )
+
+        self.question = Question.objects.create(
+            document=self.document, 
+            text="Test question"
+        )
+        self.url = reverse('submit_answer')
+
+    def test_get_submit_answer(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'reading_app/answer_form.html')
+
+    def test_post_submit_answer_valid(self):
+        post_data = {
+            'question_id': self.question.id,
+            'user_answer': 'Test answer'
+        }
+        response = self.client.post(self.url, post_data)
+        self.assertEqual(response.status_code, 302)  # Redirect status
+        self.assertTrue(Answer.objects.exists())  # Check if the answer was created
+
+    def test_post_submit_answer_valid(self):
+        # Data for POST request
+        post_data = {
+            'question_id': self.question.id,
+            'user_answer': 'Test answer'
+        }
+
+        # Make POST request and capture response
+        response = self.client.post(self.url, post_data)
+
+        # Assert redirect response (which indicates success in your view)
+        self.assertEqual(response.status_code, 302)
+
+        # Assert that the answer was created and related to the correct question
+        self.assertTrue(Answer.objects.filter(question=self.question, user_response='Test answer').exists())
+
+        # Optionally, verify redirection URL (if 'answer_success' URL is defined)
+        # self.assertRedirects(response, reverse('answer_success'))
 
