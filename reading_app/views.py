@@ -71,3 +71,7 @@ def parse_gpt3_response(response_text):
         return int(response_text.strip())
     except ValueError:
         return None
+
+def answer_success(request):
+    # Render a template or handle post-answer logic
+    return render(request, 'reading_app/answer_success.html')
