@@ -3,10 +3,12 @@ from django.urls import reverse
 from reading_app.models import Document, Question, Answer
 from reading_app.forms import DocumentForm, AnswerForm
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch
+from unittest.mock import patch, Mock
+import openai
 from reading_app.views import generate_questions
 import requests
 from django.shortcuts import get_object_or_404
+from reading_app.views import evaluate_answer_with_gpt3, build_evaluation_prompt, parse_gpt3_response
 
 
 class TestUploadDocument(TestCase):
@@ -119,4 +121,39 @@ class SubmitAnswerTests(TestCase):
 
         # Optionally, verify redirection URL (if 'answer_success' URL is defined)
         # self.assertRedirects(response, reverse('answer_success'))
+
+class EvaluateAnswerWithGPT3Tests(TestCase):
+    @patch('reading_app.views.openai.Completion.create')
+    def test_evaluate_answer_with_gpt3_successful(self, mock_create):
+        # Mock successful API response
+        mock_response = Mock()
+        mock_response.choices = [Mock(text='Mocked score response')]
+        mock_create.return_value = mock_response
+
+        question_text = "What is the capital of France?"
+        user_answer = "Paris"
+        document_text = "The capital of France is Paris."
+
+        # Call the function
+        score = evaluate_answer_with_gpt3(question_text, user_answer, document_text)
+
+        # Assertions
+        mock_create.assert_called_once_with(
+            engine="davinci",
+            prompt=build_evaluation_prompt(question_text, user_answer, document_text),
+            max_tokens=50
+        )
+        self.assertEqual(score, parse_gpt3_response('Mocked score response'))
+
+    @patch('reading_app.views.openai.Completion.create')
+    def test_evaluate_answer_with_gpt3_failure(self, mock_create):
+        # Mock API failure
+        mock_create.side_effect = openai.OpenAIError("API failure")
+
+        question_text = "What is the capital of France?"
+        user_answer = "Paris"
+        
+        # Call the function and assert it returns None on failure
+        score = evaluate_answer_with_gpt3(question_text, user_answer)
+        self.assertIsNone(score)
 
