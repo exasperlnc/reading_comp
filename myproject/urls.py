@@ -22,4 +22,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('upload/', views.upload_document, name='upload_document'),
     path('document/<int:document_id>/', views.view_document, name='view_document'),
+    path('submit-answer/', views.submit_answer, name='submit_answer'),
+    path('answer-success/', views.answer_success, name='answer_success'),
+
 ]
+
